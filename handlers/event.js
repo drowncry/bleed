@@ -1,18 +1,16 @@
 const { readdirSync } = require("fs");
 
 module.exports = (client) => {
-
-  readdirSync("./events/").forEach(file => {
-      const events = readdirSync(`./events/`).filter(files => files.endsWith(".js"));
-
-      for (let files of events) {
-          let pull = require(`../events/${files}`);
-
-      if (pull.name) {
-        client.events.set(pull.name, pull);
-      } else {
-        continue;
-      }
+    const commands = readdirSync(`./events/`).filter(file => file.endsWith(".js"));
+    for (let file of commands) {
+        try {
+            let pull = require(`../events/${file}`);
+            if (pull.name) {
+                client.events.set(pull.name, pull);
+            }
+        } catch (e) {
+            console.log(`Error en evento ${file}: ${e.message}`);
+        }
     }
-  })
+    console.log("Eventos cargados correctamente.");
 }
