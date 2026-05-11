@@ -20,6 +20,14 @@
     "path": "^0.12.7",
     "g-i-s": "^2.1.7",
     "got": "^11.8.5",
+    "superagent": "^6.1.0",
+    "parse-ms": "^2.1.0",
+    "urban": "^0.3.2",
+    "twemoji-parser": "^13.1.0",
+    "discord.js-pagination": "^1.0.3",
+    "glob": "^7.2.0",
+    "app-store-scraper": "^0.17.0",
+    "google": "^2.1.0",
     "twitter-api.js": "^1.0.2"
   }
 }
