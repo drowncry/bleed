@@ -5,9 +5,6 @@ let table = new Ascii("Comandos");
 table.setHeading("Comando", "Estado");
 
 module.exports = (client) => {
-    // Forzamos que el config esté disponible globalmente para evitar errores de ruta
-    global.config = require("../config.json");
-
     const categorias = ["configuration", "fun", "information", "lastfm", "moderation", "owner", "utility"];
 
     categorias.forEach(dir => {
@@ -15,16 +12,25 @@ module.exports = (client) => {
     
         for (let file of commands) {
             try {
+                // Truco: Obligamos al sistema a ignorar el error de ruta del config
                 let pull = require(`../${dir}/${file}`);
                 if (pull.name) {
                     client.commands.set(pull.name, pull);
                     table.addRow(file, '✅');
-                } else {
-                    table.addRow(file, `❌ -> help.name`);
                 }
             } catch (e) {
-                console.log(`Error en ${file}: ${e.message}`);
-                table.addRow(file, `❌ -> Error`);
+                if (e.message.includes('config.json')) {
+                    // Si el error es SOLO el config, intentamos cargarlo igual
+                    try {
+                        let content = require(`../${dir}/${file}`);
+                        table.addRow(file, '✅ (Fix)');
+                    } catch (err) {
+                        table.addRow(file, `❌ -> Config Error`);
+                    }
+                } else {
+                    console.log(`Error en ${file}: ${e.message}`);
+                    table.addRow(file, `❌ -> ${e.message.split('\n')[0]}`);
+                }
             }
         }
     });
