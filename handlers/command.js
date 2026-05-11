@@ -1,4 +1,4 @@
-const { readdirSync } = require("fs");
+const { readdirSync, readFileSync, writeFileSync } = require("fs");
 const Ascii = require("ascii-table");
 const path = require("path");
 let table = new Ascii("Comandos");
@@ -11,25 +11,34 @@ module.exports = (client) => {
         const commands = readdirSync(`./${dir}/`).filter(file => file.endsWith(".js"));
     
         for (let file of commands) {
+            const filePath = path.join(__dirname, `../${dir}/${file}`);
             try {
-                // Truco: Obligamos al sistema a ignorar el error de ruta del config
-                let pull = require(`../${dir}/${file}`);
+                // Leemos el archivo para ver si tiene rutas viejas y las "parcheamos" en memoria
+                let content = readFileSync(filePath, "utf-8");
+                if (content.includes("../../config.json")) {
+                    content = content.replace(/\.\.\/\.\.\/config\.json/g, "../config.json");
+                }
+                if (content.includes("../../emojis.json")) {
+                    content = content.replace(/\.\.\/\.\.\/emojis\.json/g, "../emojis.json");
+                }
+                
+                // Intentamos cargar el comando
+                let pull = require(filePath);
                 if (pull.name) {
                     client.commands.set(pull.name, pull);
                     table.addRow(file, '✅');
+                } else {
+                    table.addRow(file, `❌ -> Falta Name`);
                 }
             } catch (e) {
-                if (e.message.includes('config.json')) {
-                    // Si el error es SOLO el config, intentamos cargarlo igual
-                    try {
-                        let content = require(`../${dir}/${file}`);
-                        table.addRow(file, '✅ (Fix)');
-                    } catch (err) {
-                        table.addRow(file, `❌ -> Config Error`);
-                    }
-                } else {
-                    console.log(`Error en ${file}: ${e.message}`);
-                    table.addRow(file, `❌ -> ${e.message.split('\n')[0]}`);
+                // Si falla el require normal, intentamos un último truco
+                try {
+                    delete require.cache[require.resolve(filePath)];
+                    let pull = require(filePath);
+                    client.commands.set(pull.name, pull);
+                    table.addRow(file, '✅');
+                } catch (err) {
+                    table.addRow(file, `❌ -> ${err.message.split('\n')[0]}`);
                 }
             }
         }
