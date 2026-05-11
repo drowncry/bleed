@@ -1,13 +1,17 @@
 const http = require('http');
-// Servidor para que Render mantenga el bot encendido
+// Esto crea un servidor básico para que Render mantenga el bot 24/7
 http.createServer(function (req, res) {
   res.write('Bot is online');
   res.end();
 }).listen(process.env.PORT || 8080);
 
-const { default_prefix, color } = require("./config.json");
-// Usamos process.env.TOKEN para que sea más seguro
-const token = process.env.TOKEN; 
+// Configuración de variables (Prioriza las de Render por seguridad)
+const config = require("./config.json");
+const token = process.env.TOKEN || config.token;
+const mongoUrl = process.env.MONGO_URL || 'mongo url'; // Reemplaza 'mongo url' si no usas variables de entorno
+const default_prefix = config.default_prefix;
+const color = config.color;
+
 const Discord = require("discord.js");
 require("@haileybot/sanitize-role-mentions")();
 
@@ -17,12 +21,12 @@ const client = new Discord.Client({
   partials: ['MESSAGE', 'REACTION']
 });
 
-const mongoose = require('mongoose')
-// Asegúrate de poner tu URL de Mongo en las variables de Render también
-mongoose.connect(process.env.MONGO_URL || 'mongo url', {
+const mongoose = require('mongoose');
+mongoose.connect(mongoUrl, {
   useUnifiedTopology: true,
   useNewUrlParser: true
-}).then(console.log('connected to mongoose'))
+}).then(() => console.log('Conectado a MongoDB correctamente'))
+  .catch(err => console.error('Error al conectar a MongoDB:', err));
 
 const jointocreate = require("./jointocreate");
 jointocreate(client);
@@ -37,6 +41,7 @@ module.exports = client;
   require(`./handlers/${handler}`)(client);
 });
 
-Discord.Constants.DefaultOptions.ws.properties.$browser = "Discord Android"
+// Esto es para que el bot aparezca como si estuviera en Android
+Discord.Constants.DefaultOptions.ws.properties.$browser = "Discord Android";
 
-client.login(token)
+client.login(token);
