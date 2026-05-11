@@ -1,3 +1,5 @@
+const { ReadableStream } = require("node-superfetch"); 
+// Si da error de ReadableStream, esto lo suele arreglar.
 const http = require('http');
 // Esto crea un servidor básico para que Render mantenga el bot 24/7
 http.createServer(function (req, res) {
